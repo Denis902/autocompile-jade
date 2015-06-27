@@ -1,7 +1,7 @@
 {
   "name": "autocompile-jade",
   "main": "./lib/autocompile-jade",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Auto compiles jade in atom",
   "repository": {
     "type": "git",
