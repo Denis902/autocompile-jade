@@ -46,12 +46,12 @@ module.exports = new class AutocompileJade
     firstComment = text.match /^\s*(\/\/\-.*)\n*/
     return unless firstComment? and firstComment[1]?
     log "found comment"
-    paramsString = firstComment[1].replace(/^\/\/\-\s*/, "").replace(/\s/g,"")
+    paramsString = firstComment[1].replace(/^\/\/\-\s*/, "")
     params = path: path
     for param in paramsString.split ","
       [key, value] = param.split ":"
       continue unless key? and value?
-      params[key] = value
+      params[key.replace(/^\s+|\s+$/gm,"")] = value.replace(/^\s+|\s+$/gm,"")
     unless params.out?
       atom.notifications.addError "no output path provided"
     params.compress = true unless params.compress?
@@ -71,9 +71,9 @@ module.exports = new class AutocompileJade
       jadeString += " --pretty"
     if params.obj?
       objPath = path.resolve(path.dirname(params.path),params.obj)
-      jadeString += " --obj #{objPath}"
+      jadeString += " --obj \"#{objPath}\""
     outPath = path.resolve(path.dirname(params.path),params.out)
-    jadeString += " --out #{outPath}"
+    jadeString += " --out \"#{outPath}\""
     jadeString += " #{params.path}"
     args = ["-c",jadeString]
     if process.platform == "win32"
