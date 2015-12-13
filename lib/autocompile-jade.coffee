@@ -80,7 +80,8 @@ module.exports = new class AutocompileJade
       sh = "cmd"
       args[0] = "/c"
     jadeCompiler = spawn sh, args, {
-      cwd: process.cwd;
+      cwd: process.cwd
+      env: PATH:process.env.PATH
     }
     stderrData = []
     jadeCompiler.stderr.setEncoding("utf8")
