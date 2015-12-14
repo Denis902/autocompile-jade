@@ -74,7 +74,7 @@ module.exports = new class AutocompileJade
       jadeString += " --obj \"#{objPath}\""
     outPath = path.resolve(path.dirname(params.path),params.out)
     jadeString += " --out \"#{outPath}\""
-    jadeString += " #{params.path}"
+    jadeString += " \"#{params.path}\""
     args = ["-c",jadeString]
     if process.platform == "win32"
       sh = "cmd"
