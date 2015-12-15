@@ -70,18 +70,19 @@ module.exports = new class AutocompileJade
     unless params.compress
       jadeString += " --pretty"
     if params.obj?
-      objPath = path.resolve(path.dirname(params.path),params.obj)
+      objPath = path.resolve(path.dirname(params.path),params.obj).replace(/\\$/,"")
       jadeString += " --obj \"#{objPath}\""
-    outPath = path.resolve(path.dirname(params.path),params.out)
+    outPath = path.resolve(path.dirname(params.path),params.out).replace(/\\$/,"")
     jadeString += " --out \"#{outPath}\""
     jadeString += " \"#{params.path}\""
     args = ["-c",jadeString]
     if process.platform == "win32"
       sh = "cmd"
-      args[0] = "/c"
+      args[0]= "/c"
     jadeCompiler = spawn sh, args, {
       cwd: process.cwd
       env: PATH:process.env.PATH
+      windowsVerbatimArguments: process.platform == "win32"
     }
     stderrData = []
     jadeCompiler.stderr.setEncoding("utf8")
