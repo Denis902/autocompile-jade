@@ -1,5 +1,3 @@
-log = null
-reloader = null
 spawn = null
 path = null
 jadeCompiler = null
@@ -11,20 +9,17 @@ module.exports = new class AutocompileJade
       type: "integer"
       default: 0
       minimum: 0
+  debug: ->
   activate: ->
-    setTimeout (->
-      reloaderSettings = pkg:pkgName,folders:["lib"]
-      try
-        reloader ?= require("atom-package-reloader")(reloaderSettings)
-      ),500
-
-    unless log?
-      log = require("atom-simple-logger")(pkg:pkgName,nsp:"main")
-      log "activating"
     @disposable = atom.commands.add 'atom-workspace', 'core:save', @handleSave
-
-  deactivate: ->
-    log "deactivating"
+  consumeDebug: (debugSetup) =>
+    @debug = debugSetup(pkg: pkgName, nsp: "")
+    @debug "debug service consumed", 2
+  consumeAutoreload: (reloader) =>
+    reloader(pkg:pkgName)
+    @debug "autoreload service consumed", 2
+  deactivate: =>
+    @debug "deactivating"
     @disposable.dispose()
     log = null
     reloader?.dispose()
@@ -35,17 +30,17 @@ module.exports = new class AutocompileJade
     jadeCompiler = null
 
   handleSave: =>
-    log "got save - is jade?"
+    @debug "got save - is jade?"
     @activeEditor = atom.workspace.getActiveTextEditor()
     return unless @activeEditor?
     scopeName = @activeEditor.getGrammar().scopeName
     return unless scopeName.match /\bjade\b/
-    log "is jade!"
+    @debug "is jade!"
     path = @activeEditor.getURI()
     text = @activeEditor.getText()
     firstComment = text.match /^\s*(\/\/\-.*)\n*/
     return unless firstComment? and firstComment[1]?
-    log "found comment"
+    @debug "found comment"
     paramsString = firstComment[1].replace(/^\/\/\-\s*/, "")
     params = path: path
     for param in paramsString.split ","
@@ -56,16 +51,22 @@ module.exports = new class AutocompileJade
       atom.notifications.addError "no output path provided"
     params.compress = true unless params.compress?
     params.compress = @parseBoolean params.compress
-    log "rendering"
+    @debug "rendering"
     @render(params)
 
 
   render: (params) ->
     {spawn} = require "child_process"
     path = require "path"
+    fs = require "fs"
     jadeCompiler.kill("SIGHUP") if jadeCompiler?
     sh = "sh"
-    jadeString = path.resolve(path.dirname(module.filename),
+    relativePath = atom.project.relativizePath params.path
+    if relativePath[0]? # within a project folder
+      tmpString = path.resolve(relativePath[0],"./node_modules/.bin/jade")
+      try
+        jadeString = tmpString if fs.statSync(tmpString).isFile()
+    jadeString ?= path.resolve(path.dirname(module.filename),
                               "../node_modules/.bin/jade")
     unless params.compress
       jadeString += " --pretty"
